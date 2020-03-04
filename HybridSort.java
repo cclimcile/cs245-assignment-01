@@ -14,30 +14,30 @@ import java.io.*;
 
 public class HybridSort {
 
-//    public static void main(String[] args) throws FileNotFoundException{
-//
-//        File data = new File("big_data.txt");
-//        Scanner scanner = new Scanner(data);
-//
-//        double [] arr = new double[1000000];
-//
-//        int index = 0;
-//        while(scanner.hasNextLine()){
-//
-//            String number = scanner.nextLine();
-//            int result = Integer.parseInt(number);
-//            arr[index++] = result;
-//
-//        }
-//
-//        hybridSort(arr, 0, arr.length - 1);
-//
-//        /* Output the sorted list to standard out (the terminal) */
-//        for(int i = 0; i < arr.length; i++){
-//            System.out.println(arr[i]);
-//        }
-//        System.out.println("HybridSort Completed.");
-//    }
+    public static void main(String[] args) throws FileNotFoundException{
+
+        File data = new File("big_data.txt");
+        Scanner scanner = new Scanner(data);
+
+        double [] arr = new double[1000000];
+
+        int index = 0;
+        while(scanner.hasNextLine()){
+
+            String number = scanner.nextLine();
+            int result = Integer.parseInt(number);
+            arr[index++] = result;
+
+        }
+
+        hybridSort(arr, 0, arr.length - 1);
+
+        /* Output the sorted list to standard out (the terminal) */
+        for(int i = 0; i < arr.length; i++){
+            System.out.println(arr[i]);
+        }
+        System.out.println("HybridSort Completed.");
+    }
 
     /**
      * This function swaps to elements at the given index

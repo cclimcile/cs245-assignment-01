@@ -16,10 +16,8 @@ public class ExternalSort {
 
     public static void main(String[] args) throws IOException{
 
-        File input = new File("input.txt");
-        File output = new File("output.txt");
+        externalSort("input.txt", "output.txt", 9, 3);
 
-        externalSort(input, output, 10, 3);
     }
 
     /**
@@ -31,21 +29,22 @@ public class ExternalSort {
      * @param k
      * @throws IOException
      */
-    public static void externalSort(File inputFile, File outputFile, int n, int k) throws IOException{
+    public static void externalSort(String inputFile, String outputFile, int n, int k) throws IOException{
 
-        Scanner scanner = new Scanner(inputFile);
+        File input = new File(inputFile);
+        File output = new File(outputFile);
+        Scanner scanner = new Scanner(input);
 
-        int num_chunk = (int)Math.ceil(n/k);
+        int num_chunk = (int) Math.ceil((double) n /(double) k);
         int file_num = 0;
 
         /* Read in a chunk at a time */
-        for(int i = 0; i < num_chunk; i ++){
+        for(int i = 0; i < num_chunk - 1; i ++){
             /* Populate one chunk file */
             double [] temp = new double[k];
             for(int j = 0; j < k; j ++){
                 String number = scanner.nextLine();
                 double result = Double.parseDouble(number);
-                System.out.println(number);
                 temp[j] = result;
             }
             insertionSort(temp);
@@ -54,29 +53,38 @@ public class ExternalSort {
         }
 
         /* Special case: last chunk */
-        double [] last_chunk = new double[k];
+        int size = 0;
+        if(n % k == 0){
+            size = k;
+        } else {
+            size = n % k;
+        }
+        double [] last_chunk = new double[size];
         int last = 0;
-        int check = 0;
         while(scanner.hasNextLine()) {
-            check += 1;
             /* Populate one chunk file */
             String number = scanner.nextLine();
             double result = Double.parseDouble(number);
-            System.out.println(number);
-            last_chunk[last++] = result;
-        }
-        for(int i = check; i < k; i++){
-            last_chunk[i] = -1;
+            last_chunk[last] = result;
+            last += 1;
         }
         insertionSort(last_chunk);
-        createFile(file_num, last_chunk, k);
+        createFile(file_num, last_chunk, size);
 
         /* Time to sort the files */
         file_num = 0;
         String filename = "";
         int indices [] = new int[num_chunk];
+        int readline [] = new int[num_chunk];
         double temp [] = new double[num_chunk];
         int temp_i = 0;
+
+        /* Initialize indices */
+        for(int i = 0; i < num_chunk; i++){
+            indices[i] = k;
+        }
+        /* Last chunk */
+        indices[num_chunk - 1] = size;
 
         /* Initialize temp */
         for(int i = 0; i < num_chunk; i++){
@@ -90,19 +98,68 @@ public class ExternalSort {
             temp[temp_i++] = value;
         }
 
+        kMerge(output, n, k, num_chunk, size);
+        System.out.println("Successfully transferred data.");
+
+    }
+
+    /**
+     * It is is similar to merge sort but merges from k arrays
+     * @param outputFile
+     * @param n
+     * @param k
+     * @param num_chunk
+     * @param size
+     * @throws IOException
+     * @throws FileNotFoundException
+     */
+    public static void kMerge(File outputFile, int n, int k, int num_chunk, int size) throws IOException, FileNotFoundException{
+        /* Time to sort the files */
+        int file_num = 0;
+        String filename = "";
+        int indices [] = new int[num_chunk];
+        int readline [] = new int[num_chunk];
+        double temp [] = new double[num_chunk];
+        int temp_i = 0;
+
+        /* Initialize indices */
+        for(int i = 0; i < num_chunk; i++){
+            indices[i] = k;
+        }
+        /* Last chunk */
+        indices[num_chunk - 1] = size;
+
+        /* Initialize temp */
+        for(int i = 0; i < num_chunk; i++){
+            filename = "temp" + file_num + ".txt";
+            File temp_file = new File(filename);
+            Scanner temp_s = new Scanner(temp_file);
+            file_num += 1;
+
+            String num = temp_s.nextLine();
+            double value = Double.parseDouble(num);
+            temp[temp_i++] = value;
+        }
+
+        /* K-merge Sort */
+        /* This keeps track of how many files have been sorted into the output file */
         int num_sorted = 0;
+        int last_file = 0;
+        int last_readline = 0;
         PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
-        while(num_sorted < indices.length){
+
+        while(num_sorted < num_chunk){
+
             /* Find the smallest value in temp */
             int index = findMin(temp);
-            System.out.println("Min in temp is: " + temp[index]);
             /* Append it to output file */
             writer.println(temp[index]);
 
             /* Increment the index for that file and replace the temp*/
-            indices[index]  += 1;
+            indices[index]  -= 1;
+            readline[index] += 1;
             /* If everything in file_index has been outputted, we don't want to access it */
-            if(indices[index] >= k){
+            if(indices[index] <= 0){
                 num_sorted += 1;
                 temp[index] = -1;
             } else {
@@ -111,7 +168,7 @@ public class ExternalSort {
                 Scanner temp_s = new Scanner(temp_file);
                 String num = "";
                 /* Keeps track of which line to read in the file */
-                for(int i = 0; i <= indices[index]; i++){
+                for(int i = 0; i <= readline[index]; i++){
                     num = temp_s.nextLine();
                 }
                 double value = Double.parseDouble(num);
@@ -119,9 +176,10 @@ public class ExternalSort {
                 temp[index] = value;
             }
 
+            last_file = index;
+            last_readline = readline[index];
         }
         writer.close();
-
     }
 
     /**
@@ -131,8 +189,11 @@ public class ExternalSort {
      */
     public static int findMin(double [] a){
         int index = 0;
-        for(int i = 1; i < a.length; i++){
-            if(a[i] == -1){
+        while(a[index] == -1){
+            index += 1;
+        }
+        for(int i = index + 1; i < a.length; i++){
+            if(a[i] == -1.0){
                 /* We want to skip it */
             }else if(a[i] < a[index]){
                 index = i;
@@ -186,6 +247,5 @@ public class ExternalSort {
         System.out.println("Successfully wrote to " + filename + "\n");
 
     }
-
 
 }
